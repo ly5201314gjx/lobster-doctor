@@ -1,6 +1,6 @@
 # Lobster Doctor 🦞
 
-> **OpenClaw / AI Runtime 的“体检医生”——把玄学运维变成可复核报告。**
+> **OpenClaw / AI Runtime 诊断型体检 CLI：一条命令输出可复核报告（text/JSON/Markdown），支持 baseline/only-new，适合 cron/CI 门禁。**
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -17,7 +17,33 @@
 
 **Lobster Doctor** 就是干这个的：
 
-> 一条命令出报告，能给人看、能给机器人吃、能给 CI/cron 当门禁。
+> 一条命令出报告：给人看、给机器人吃、给 CI/cron 当门禁。
+
+---
+
+## Copy Bank（不同场景一句话）
+
+> 你要“工程/克制/狂/营销”全都要：那就做成可复制的多版本话术。
+
+**工程 & 克制（默认）**
+```text
+OpenClaw / AI Runtime 诊断型体检 CLI：一条命令输出可复核报告（text/JSON/Markdown），支持 baseline/only-new，适合 cron/CI 门禁。
+```
+
+**营销（产品感）**
+```text
+把“能跑”升级成“可诊断、可验证、可维护”。一条命令出报告，直接接 cron/CI/机器人通知。
+```
+
+**更狂（宣言版）**
+```text
+别猜配置、别猜技能、别猜磁盘、别猜任务死没死——用报告说话。
+```
+
+**超短（群里一句）**
+```text
+OpenClaw 体检工具：config/skill/disk/task 一把梭，支持 baseline 只看新增。
+```
 
 ---
 
