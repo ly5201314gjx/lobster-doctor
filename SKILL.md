@@ -1,54 +1,55 @@
-# Lobster Doctor 技能
+---
+name: lobster-doctor
+description: OpenClaw / AI 运行时的健康检查与诊断技能（配套 CLI）。用于：排查 OpenClaw 配置是否生效、技能仓库能否安装、磁盘风险分级、长任务超时/OOM/失败信号扫描，并输出稳定的 text/JSON/Markdown 报告；支持 baseline/only-new 降噪，适合 cron/CI 门禁。触发词：体检、巡检、健康检查、healthcheck、诊断、排雷、config/disk/task/skill、baseline、only-new。
+---
 
-Lobster Doctor 是一个专门给 OpenClaw / AI 运行时做体检、巡检、排雷的命令行工具。
+# Lobster Doctor（OpenClaw 技能）
 
-它能解决的核心问题：
-- 配置改了但不知道有没有生效
-- 一个 GitHub 仓库到底能不能装成技能
-- 磁盘哪些能清、哪些千万别碰
-- 长任务为什么超时、失败、OOM
-- 已知问题太多，如何只盯新增问题
+这是一个**诊断型技能 + CLI 工具**。
 
-## 安装方式
+- 技能侧：提供“什么时候用、怎么用、输出是什么”的稳定规范（用于被 OpenClaw 识别与触发）
+- CLI 侧：负责确定性采集与分析（`lobster-doctor ...`）
 
-### 方式一：一键安装到 OpenClaw 技能目录
+## 安装到 OpenClaw（推荐）
 
 ```bash
 bash install-for-openclaw.sh
 ```
 
-### 方式二：通过 npm 全局安装
+安装完成后，目录一般为：
 
-```bash
-npm install -g lobster-doctor
+```text
+~/.openclaw/skills/lobster-doctor
 ```
 
-安装后可直接使用：
+并通过 `npm link` 暴露命令 `lobster-doctor`。
+
+## 常用命令
 
 ```bash
-lobster-doctor all
-lobster-doctor task
-lobster-doctor disk
+# 聚合体检（建议默认先跑它）
+lobster-doctor all [repo-or-dir]
+
+# 给自动化系统用
+lobster-doctor all [repo-or-dir] --json
+
+# baseline：先写入，再只看新增
+lobster-doctor all [repo-or-dir] --json --write-baseline .lobster-baseline.json
+lobster-doctor all [repo-or-dir] --baseline .lobster-baseline.json --only-new --summary-only
+
+# 输出 Markdown 报告
+lobster-doctor all [repo-or-dir] --json --markdown lobster-report.md
+
+# 单模块
 lobster-doctor config
+lobster-doctor disk
+lobster-doctor task
 lobster-doctor skill /path/to/repo
 ```
 
-## 推荐用法
+## 输出与退出码
 
-### 完整体检
+- 退出码：`0=正常`，`1=提醒`，`2=问题`（适合 cron/CI 门禁）
+- 输出：文本（人读）/ JSON（机器消费）/ Markdown（报告）
 
-```bash
-lobster-doctor all /path/to/repo
-```
-
-### 只看新增问题
-
-```bash
-lobster-doctor all /path/to/repo --baseline .lobster-baseline.json --only-new --summary-only
-```
-
-### 生成 Markdown 报告
-
-```bash
-lobster-doctor all /path/to/repo --json --markdown lobster-report.md
-```
+> 详细算法与规则说明见仓库 README（工程版）。
