@@ -26,6 +26,8 @@
     "bin",
     "src",
     "README.md",
+    "SKILL.md",
+    "install-for-openclaw.sh",
     "LICENSE",
     "CHANGELOG.md"
   ],

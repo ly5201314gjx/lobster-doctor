@@ -1,0 +1,5 @@
+test/
+.tmp-test-home-*
+*.log
+*.json
+.github/

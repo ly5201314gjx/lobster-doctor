@@ -1,85 +1,92 @@
 # Lobster Doctor
 
-> **The healthcheck CLI for OpenClaw runtimes, skills, disks, and long-running AI tasks.**
+> **给 OpenClaw / AI 运行时做体检、巡检、排雷的专业 CLI。**
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![CI](https://img.shields.io/badge/tests-26%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-26%20passing-brightgreen)](#测试)
 [![GitHub Repo stars](https://img.shields.io/github/stars/ly5201314gjx/lobster-doctor?style=social)](https://github.com/ly5201314gjx/lobster-doctor)
 
-**Lobster Doctor** turns OpenClaw from **“it runs”** into something **diagnosable, verifiable, and maintainable**.
+**Lobster Doctor** 不是聊天壳子，也不是演示玩具。  
+它是一个专门面向 **OpenClaw / AI runtime / 自动化任务系统** 的诊断型命令行工具——专治：
 
-It is not another chat shell. It is a purpose-built **inspection and diagnostics CLI** that helps you:
-- expose config ambiguity before it bites,
-- audit whether a repo is actually installable as a skill,
-- identify safe vs dangerous disk cleanup targets,
-- catch long-task timeout / OOM / failure patterns,
-- baseline known issues and report **only new problems**.
+- 配置改了，但不知道到底有没有生效
+- 一个 GitHub 仓库看起来像技能，实际上根本装不起来
+- 磁盘空间快炸了，却不知道哪些能删、哪些不能碰
+- 长任务时不时超时、失败、OOM，却没人第一时间发现
+- 已知问题天天重复报警，把真正的新问题淹没掉
 
----
+一句话：
 
-## Why this exists
-
-Real OpenClaw work gets messy fast:
-- a config was changed, but not the one actually taking effect,
-- a GitHub repo *looks* like a skill, but the install path is fake,
-- disk cleanup risks deleting real data instead of caches,
-- long-running workflows silently time out, stall, or die with OOM,
-- recurring known issues drown out the new stuff that actually matters.
-
-**Lobster Doctor** exists to kill that ambiguity.
+> **把“能跑”升级成“可诊断、可验证、可维护、可巡检”。**
 
 ---
 
-## Core features
+## 为什么这个项目值得看
 
-### 🔧 Config diagnostics
-Audit the live config shape and flag common ambiguity:
-- missing primary model,
-- suspicious `models.mode`,
-- suspicious Telegram stream settings,
-- mixed legacy/new stream fields,
-- wrong config filename taking effect.
+现实里的 OpenClaw 维护，不是写完配置就万事大吉。
+真正恶心人的，往往是这些问题：
 
-### 🧩 Skill installability audit
-Verify whether a repo is actually ready to be installed as a skill:
-- `package.json` / `README.md` / `SKILL.md` presence,
-- bin mapping and smoke startup,
-- install script sanity,
-- hardcoded `/root/.openclaw` paths,
-- docs/install mismatch.
+- 你以为改的是生效配置，结果改错文件了
+- 你以为某个仓库能一键装技能，结果 bin、README、SKILL 三套话术互相打架
+- 你以为删的是缓存，结果删到了真数据
+- 你以为任务只是“慢一点”，结果其实已经 OOM 或失败了
+- 你以为告警很多说明监控很强，实际上只是噪音多到没人想看
 
-### 💽 Disk risk classification
-Stop deleting the wrong thing:
-- classify cache vs caution vs danger directories,
-- surface high-usage mounts,
-- summarize cleanup risk instead of dumping raw `du` noise.
-
-### ⏱ Task health diagnostics
-Inspect long-running AI and automation workloads:
-- detect guard / lock / cooldown / monitor / reminder / health-check scripts,
-- surface risky long-task patterns,
-- scan logs for `error`, `fail`, `timeout`, and **OOM**,
-- prioritize the nastiest findings first.
-
-### 📊 Aggregate reporting
-Run one command and get a whole-system inspection:
-- human-readable terminal output,
-- machine-readable JSON,
-- summary-only mode,
-- markdown report generation,
-- status-aware exit codes.
-
-### 🔕 Baseline + only-new mode
-Make recurring known problems boring again:
-- save a baseline,
-- suppress known warnings/errors,
-- report only new findings,
-- keep long-term healthchecks useful instead of noisy.
+**Lobster Doctor** 的目标，就是狠狠干掉这种模糊地带。
 
 ---
 
-## CLI commands
+## 核心能力
+
+### 🔧 配置诊断（config）
+把配置真相直接掀开：
+- 主模型有没有真正设置
+- `models.mode` 是否可疑
+- Telegram stream 配置是否暧昧
+- 新旧字段是否混用
+- 到底读的是不是你以为的那个配置文件
+
+### 🧩 技能验收（skill）
+判断一个仓库到底能不能装成技能：
+- `package.json` / `README.md` / `SKILL.md` 是否齐全
+- bin 命令是否真实可启动
+- 安装脚本是否靠谱
+- 有没有 `/root/.openclaw` 这种硬编码
+- 文档和安装路径是否互相打脸
+
+### 💽 磁盘风险分级（disk）
+不是只给你一坨 `du` / `df` 输出，而是直接判断：
+- 哪些属于缓存，可优先清
+- 哪些属于谨慎区，别无脑删
+- 哪些属于危险区，碰了容易出事故
+- 哪些挂载点已经接近打满
+
+### ⏱ 长任务体检（task）
+盯住最容易闷头出事的那类任务：
+- 守卫脚本 / lock / cooldown / monitor / watchdog / reminder / health-check
+- 高风险长任务模式
+- 日志中的 `error / fail / timeout / OOM`
+- 哪些问题最脏、最该先处理
+
+### 📊 聚合巡检（all）
+一条命令，整套体检：
+- 文本输出
+- JSON 输出
+- summary-only 摘要模式
+- Markdown 报告导出
+- 状态驱动退出码
+
+### 🔕 基线与“只看新增问题”
+让巡检真正可长期运行：
+- 保存当前基线
+- 压掉已知旧问题
+- 只盯新增告警/异常
+- 让定时巡检不再变成纯噪音发生器
+
+---
+
+## 命令总览
 
 ```bash
 lobster-doctor all [repo-or-dir] [--json] [--baseline file] [--only-new] [--write-baseline file] [--summary-only] [--quiet] [--markdown file]
@@ -91,38 +98,70 @@ lobster-doctor task [--json]
 
 ---
 
-## Quickstart
+## 最快上手
 
-### Run a full inspection
+### 1）跑一把完整体检
 
 ```bash
 lobster-doctor all ./some-skill
 ```
 
-### Get JSON for automation / CI / bots
+### 2）给自动化 / CI / 机器人输出 JSON
 
 ```bash
 lobster-doctor all ./some-skill --json
 ```
 
-### Write a baseline, then only report new issues
+### 3）写入基线，然后只看新增问题
 
 ```bash
 lobster-doctor all ./some-skill --json --write-baseline .lobster-baseline.json
 lobster-doctor all ./some-skill --baseline .lobster-baseline.json --only-new --summary-only
 ```
 
-### Generate a markdown report
+### 4）导出 Markdown 巡检报告
 
 ```bash
 lobster-doctor all ./some-skill --json --markdown lobster-report.md
 ```
 
+### 5）装进 OpenClaw 技能目录
+
+```bash
+bash install-for-openclaw.sh
+```
+
 ---
 
-## Example output
+## 一键安装
 
-### Summary-only mode
+### 方式一：npm 全局安装
+
+```bash
+npm install -g lobster-doctor
+```
+
+### 方式二：安装成 OpenClaw 技能
+
+```bash
+bash install-for-openclaw.sh
+```
+
+安装完成后即可直接运行：
+
+```bash
+lobster-doctor all
+lobster-doctor task
+lobster-doctor disk
+lobster-doctor config
+lobster-doctor skill /path/to/repo
+```
+
+---
+
+## 输出示例
+
+### 摘要模式
 
 ```bash
 lobster-doctor all ./some-skill --summary-only
@@ -140,19 +179,23 @@ lobster-doctor all ./some-skill --summary-only
 - skill: status=warn score=96 exit=1 findings=1 good=12 warn=1 bad=0
 ```
 
-### Exit codes
+### 退出码约定
 
-- `0` = ok
-- `1` = warn
-- `2` = bad
+- `0` = 正常
+- `1` = 有提醒
+- `2` = 有明显问题
 
-Perfect for cron jobs, CI, and agent orchestration.
+这玩意儿非常适合：
+- cron 定时任务
+- CI / CD 健康门禁
+- agent 自动巡检
+- 机器人状态通知
 
 ---
 
-## JSON schema highlights
+## JSON 结果结构亮点
 
-Each report exposes a stable structure:
+每个报告都会带统一结构：
 
 ```json
 {
@@ -173,60 +216,64 @@ Each report exposes a stable structure:
 }
 ```
 
-Aggregate `all --json` also returns:
-- `summary[]` for compact module rollup,
-- `reports{}` for full detail,
-- `exitCode` for machine decisions.
+`all --json` 还会额外提供：
+- `summary[]`：模块级摘要列表
+- `reports{}`：完整细节
+- `exitCode`：总退出码
 
 ---
 
-## Use cases
+## 适合谁
 
-Lobster Doctor is especially useful when you need to:
-- validate whether a repo is truly skill-installable,
-- audit an OpenClaw machine before or after config changes,
-- monitor long-running AI jobs for timeout / OOM regressions,
-- generate health reports for operators,
-- suppress old known issues and focus only on new breakage.
+Lobster Doctor 适合这些场景：
 
----
-
-## Project status
-
-Current release already includes:
-- config diagnostics,
-- skill audit,
-- disk classification,
-- task health checks,
-- aggregate inspection,
-- JSON output,
-- markdown output,
-- baseline / only-new support,
-- sorted reporting,
-- automated test coverage.
+- 你在维护 OpenClaw 主机 / 工作站 / 自动化环境
+- 你需要判断一个 GitHub 仓库到底能不能装成技能
+- 你要给 AI 长任务做巡检和回归诊断
+- 你需要生成能发给人看的巡检报告
+- 你不想每天被旧问题重复轰炸，只想盯新增异常
 
 ---
 
-## Testing
+## 当前状态
+
+目前已具备：
+- 配置诊断
+- 技能验收
+- 磁盘风险分级
+- 长任务体检
+- 聚合巡检
+- JSON 输出
+- Markdown 报告
+- baseline / only-new
+- summary-only / quiet
+- 排序稳定
+- 统一 summary schema
+- 自动化测试覆盖
+
+---
+
+## 测试
 
 ```bash
 npm test
 ```
 
-Current local smoke/analyzer coverage: **26 passing tests**.
+当前本地测试状态：**26 项通过**。
 
 ---
 
-## Roadmap
+## 路线图
 
-- deeper skill install verification,
-- richer finding taxonomy,
-- summary-focused report modes,
-- CI/cron-ready default workflows,
-- stronger OpenClaw-aware heuristics.
+接下来会继续补：
+- 更深入的技能安装验证
+- 更细的 finding 类型体系
+- 更适合通知/机器人消费的摘要输出
+- 更强的 OpenClaw 现场规则识别
+- 更顺手的 CI / cron 默认工作流
 
 ---
 
-## License
+## 许可证
 
 MIT
