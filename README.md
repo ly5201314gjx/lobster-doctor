@@ -1,30 +1,36 @@
 # Lobster Doctor
 
-OpenClaw / AI Runtime diagnostics CLI.
+面向 OpenClaw / AI Runtime 的诊断型体检 CLI。
 
-- **Purpose**: produce consistent, reviewable health reports for OpenClaw runtimes and skill repos
-- **Outputs**: human-readable text, machine-readable JSON, optional Markdown report
-- **Automation**: stable exit codes (0/1/2), baseline + only-new to reduce recurring noise
+- **目标**：输出稳定、可复核的健康报告，用来定位“到底哪里坏了/该先修什么”
+- **输出形态**：可读文本 + 机器可用 JSON + 可选 Markdown 报告
+- **自动化友好**：稳定退出码（0/1/2），支持 baseline + only-new 压噪，只盯新增问题
 
-## Requirements
+---
+
+## 环境要求
 
 - Node.js >= 18
 
-## Installation
+---
 
-### Option A: npm global install
+## 安装
+
+### 方式 A：npm 全局安装
 
 ```bash
 npm install -g lobster-doctor
 ```
 
-### Option B: install as an OpenClaw skill
+### 方式 B：作为 OpenClaw 技能安装
 
 ```bash
 bash install-for-openclaw.sh
 ```
 
-## CLI
+---
+
+## 命令总览
 
 ```bash
 lobster-doctor all [repo-or-dir] [--json] [--baseline file] [--only-new] [--write-baseline file] [--summary-only] [--quiet] [--markdown file]
@@ -34,77 +40,83 @@ lobster-doctor disk [--json]
 lobster-doctor task [--json]
 ```
 
-## Exit codes
+---
 
-- `0`: OK
-- `1`: WARN (action recommended)
-- `2`: BAD (clear problems detected)
+## 退出码约定（适合 cron / CI 门禁）
 
-## Quick start
+- `0`：正常（OK）
+- `1`：提醒（WARN，建议处理）
+- `2`：问题（BAD，建议阻断/告警）
 
-### Run an aggregate check
+---
+
+## 快速上手
+
+### 1）跑一把聚合体检
 
 ```bash
 lobster-doctor all ./some-skill
 ```
 
-### JSON output (for bots/CI)
+### 2）输出 JSON（给机器人/CI 消费）
 
 ```bash
 lobster-doctor all ./some-skill --json
 ```
 
-### Baseline workflow (suppress known findings)
+### 3）基线工作流（压掉旧问题，只看新增）
 
 ```bash
-# 1) capture baseline
+# 1) 生成基线
 lobster-doctor all ./some-skill --json --write-baseline .lobster-baseline.json
 
-# 2) later: only report new findings
+# 2) 后续仅看新增问题
 lobster-doctor all ./some-skill --baseline .lobster-baseline.json --only-new --summary-only
 ```
 
-### Write Markdown report
+### 4）导出 Markdown 报告
 
 ```bash
 lobster-doctor all ./some-skill --json --markdown lobster-report.md
 ```
 
-## What the tool checks
+---
 
-### `config`: OpenClaw config diagnostics
+## 工具会检查什么
 
-- Detect the config file being read (`openclaw.json` vs `config.json`)
-- Extract and validate key configuration signals
-- Flag ambiguous or suspicious combinations (e.g. legacy + new fields present)
+### `config`：OpenClaw 配置诊断
 
-### `skill`: skill repo audit
+- 识别当前读取的配置文件（`openclaw.json` vs `config.json`）
+- 抽取关键字段（模型、路由模式、Telegram stream 等）并做归一化
+- 检测歧义/冲突写法（例如新旧字段同时存在）
 
-- Verify skill repo shape and installability signals
-- Detect common footguns (e.g. hard-coded dangerous paths)
+### `skill`：技能仓库验收
 
-### `disk`: disk risk classification
+- 检查仓库是否满足“可安装/可执行”的闭环（`package.json` / `SKILL.md` / `bin` 等）
+- 检测常见坑（例如危险路径硬编码、安装脚本不可信等）
 
-- Report top directory usage under `$HOME`
-- Classify common directories into **safe/caution/danger/review**
-- Warn when mount pressure approaches thresholds
+### `disk`：磁盘风险分级
 
-### `task`: long-running task health
+- 统计 `$HOME` 目录下 Top 占用（基于 `du`）
+- 将目录按风险分级为：**safe / caution / danger / review**
+- 检测挂载点压力（基于 `df`），在阈值附近给出提醒
 
-- Scan for common guard/monitor patterns
-- Parse logs for error/timeout/OOM signals
-- Summarize risk and produce actionable findings
+### `task`：长任务体检
 
-### `all`: aggregate bundle
+- 识别常见 guard/monitor/watchdog 任务模式
+- 扫描日志中的 `error / fail / timeout / OOM` 等信号
+- 输出可执行的发现项（findings）
 
-- Runs `config + disk + task (+ skill if target provided)`
-- Emits a stable summary table + optional baseline diff
+### `all`：聚合体检
+
+- 运行 `config + disk + task`（若提供目标目录，则加上 `skill`）
+- 输出稳定摘要表 + 可选 baseline diff
 
 ---
 
-# Output model
+## 输出结构（统一报告模型）
 
-All module reports are normalized into the same shape:
+所有模块输出都会被归一化为同一种结构：
 
 ```json
 {
@@ -125,39 +137,37 @@ All module reports are normalized into the same shape:
 }
 ```
 
-`all --json` returns:
+`all --json` 额外返回：
 
-- `summary[]`: per-module summary rows (sorted by severity)
-- `reports{}`: full per-module reports
-- `exitCode`: bundle exit code derived from bundle status
+- `summary[]`：模块级摘要（按严重程度排序）
+- `reports{}`：每个模块的完整报告
+- `exitCode`：聚合退出码（由聚合状态推导）
 
 ---
 
-# Algorithms (deterministic rules)
+## 算法与规则（可复核、可解释）
 
-This section documents the current implementation logic, so results are explainable and debuggable.
+本节记录当前实现的确定性规则，保证结果可解释、可调试。
 
-## A) Status calculation
-
-A report status is derived from findings:
+### A）状态计算
 
 ```text
-if bad.length > 0      => status = "bad"
-else if warnings.length > 0 => status = "warn"
-else                    => status = "ok"
+如果 bad.length > 0             => status = "bad"
+否则如果 warnings.length > 0    => status = "warn"
+否则                             => status = "ok"
 ```
 
-Exit code is derived from status:
+退出码映射：
 
 ```text
-ok => 0
+ok   => 0
 warn => 1
-bad => 2
+bad  => 2
 ```
 
-## B) Scoring
+### B）评分（score）
 
-Each module starts at 100 and is penalized by finding counts:
+每个模块从 100 分起步，根据发现项数量扣分：
 
 ```text
 score = 100
@@ -166,96 +176,96 @@ score -= warnCount * 6
 score = clamp(score, 0, 100)
 ```
 
-The `all` bundle score is the mean of module scores (rounded).
+`all` 的总分为各模块分数的平均值（四舍五入）。
 
-## C) Baseline + only-new (noise suppression)
+### C）baseline + only-new（压噪逻辑）
 
-Baseline is a persisted, normalized report snapshot.
+baseline 是“历史归一化报告快照”。
 
-High-level behavior:
+高层行为：
 
 ```text
-load baseline
-run module report
-if onlyNew:
-  remove findings that exist in baseline
-emit diff summary + remaining findings
+读取 baseline
+运行模块报告
+如果 onlyNew:
+  删除 baseline 中已出现过的发现项
+输出 diff 摘要 + 剩余发现项
 ```
 
-Implementation notes:
+实现要点：
 
-- baseline is applied per-module
-- the report is finalized after baseline application (status/score/counts recalculated)
+- baseline 是按模块应用的
+- baseline 应用后会重新 finalize（重新计算 status/score/counts）
 
-## D) Disk classification heuristics
+### D）disk 目录分级启发式
 
-Input:
+输入来源：
 
-- `$HOME` top entries via `du -h -d 1 $HOME | sort -hr | head`
-- mount pressure via `df -h <mount> | tail -n 1`
+- `$HOME` Top 占用：`du -h -d 1 $HOME | sort -hr | head`
+- 挂载点压力：`df -h <mount> | tail -n 1`
 
-Classification rules (current):
+当前分类规则（简化描述）：
 
-- `/.openclaw/` => **danger** (OpenClaw data/config)
-- `/workspace` or `/projects` => **caution** (active work)
-- `/node_modules` => **caution** (removable but disruptive)
-- base in {`.cache`, `.npm`, `.bun`, `.cargo`, `.pnpm-store`} => **safe** (cache)
-- `Downloads`, `Desktop`, `Documents` => **caution** (user content)
-- otherwise => **review**
+- `/.openclaw/` => **danger**（OpenClaw 配置/数据，禁止乱删）
+- `/workspace` 或 `/projects` => **caution**（工作目录，删错容易事故）
+- `/node_modules` => **caution**（可重装但会影响当前项目）
+- 目录名属于 `{.cache, .npm, .bun, .cargo, .pnpm-store}` => **safe**（典型缓存，优先清）
+- `Downloads / Desktop / Documents` => **caution**（用户内容目录，先确认）
+- 其他 => **review**（需要人工判断用途）
 
-Mount pressure thresholds:
+挂载点压力阈值：
 
-- `>= 90%` => warn: high pressure
-- `>= 80%` => warn: approaching full
+- `>= 90%`：提醒（高压）
+- `>= 80%`：提醒（接近打满）
 
-## E) Config checks (current signals)
+### E）config 检查（当前信号）
 
-Config file resolution:
+配置文件选择：
 
 ```text
-candidate = first existing of:
+从以下候选中，取第一个存在的：
   ~/.openclaw/openclaw.json
   ~/.openclaw/config.json
 ```
 
-Primary model normalization order:
+主模型归一化优先级：
 
 ```text
 agents.defaults.model.primary
 agents.defaults.model
 agent.model
-else "(未设置)"
+否则 "(未设置)"
 ```
 
-Telegram stream normalization:
+Telegram stream 归一化：
 
 ```text
 channels.telegram.streamMode
-else if channels.telegram.streaming is boolean => "legacy:true/false"
-else "(未设置)"
+否则如果 channels.telegram.streaming 是 boolean => "legacy:true/false"
+否则 "(未设置)"
 ```
 
-Known value sets:
+已知值集合（用于可疑值提示）：
 
-- `models.mode` expected in: `alias | direct | router`
-- telegram expected in: `edit | replace | final-only | off | legacy:true | legacy:false`
+- `models.mode` 常见：`alias | direct | router`
+- Telegram stream 常见：`edit | replace | final-only | off | legacy:true | legacy:false`
 
-Warnings:
+告警条件（当前）：
 
-- `channels.telegram.streamMode` and legacy `streaming` both set
-- config file is `config.json` (may not be the actual effective config)
+- Telegram 同时存在 `streamMode` 与 legacy `streaming`
+- 读取到的配置是 `config.json`（可能不是实际生效配置）
 
 ---
 
-# Development
+## 开发与测试
 
-## Run tests
+### 运行测试
 
 ```bash
 npm test
 ```
 
-## Local usage
+### 本地运行示例
 
 ```bash
 node ./bin/lobster-doctor.js all --summary-only
@@ -263,19 +273,17 @@ node ./bin/lobster-doctor.js all --summary-only
 
 ---
 
-# License
+## 许可证
 
 MIT
 
 ---
 
-# Appendix: Copy Bank (optional)
-
-Engineering / marketing / short variants for sharing in chats or release notes.
+## 附录：话术库（可选）
 
 ```text
-Engineering: OpenClaw / AI Runtime diagnostics CLI with stable reports (text/JSON/Markdown) + baseline/only-new.
-Marketing:   Upgrade "it runs" into "it is diagnosable". One command outputs reports for cron/CI/bots.
-Bold:        Stop guessing. Use reports.
-Short:       OpenClaw healthcheck: config/skill/disk/task + baseline only-new.
+工程版：OpenClaw / AI Runtime 诊断型体检 CLI，稳定输出（text/JSON/Markdown）+ baseline/only-new。
+营销版：把“能跑”升级成“可诊断、可验证、可维护”，一条命令出报告接 cron/CI/机器人。
+狂版：  别猜，用报告说话。
+超短：  OpenClaw 体检：config/skill/disk/task + baseline 只看新增。
 ```
