@@ -1,0 +1,6 @@
+12G	/home/test/.cache
+8.0G	/home/test/workspace
+3.0G	/home/test/.openclaw
+1.5G	/home/test/Downloads
+900M	/home/test/.npm
+200M	/home/test/Documents

@@ -1,0 +1,6 @@
+{
+  "suppressedBad": ["known bad"],
+  "suppressedWarnings": ["known warning"],
+  "freshBad": ["new bad"],
+  "freshWarnings": ["new warning"]
+}

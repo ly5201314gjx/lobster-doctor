@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "items": {
+    "task": {
+      "bad": [
+        "最近日志出现 OOM: 4 条"
+      ],
+      "warnings": [
+        "检测到潜在长任务: qmd-embedding-monitor-run.sh, qmd-embedding-monitor.sh"
+      ]
+    },
+    "config": {
+      "warnings": [
+        "models.mode 看起来不是常见值: merge"
+      ]
+    }
+  }
+}

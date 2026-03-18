@@ -1,0 +1,17 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "glm-5"
+      }
+    }
+  },
+  "models": {
+    "mode": "alias"
+  },
+  "channels": {
+    "telegram": {
+      "streamMode": "edit"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "lobster-doctor",
+  "version": "0.1.0",
+  "description": "Healthcheck and diagnostics CLI for OpenClaw runtimes, skills, disks, and long-running AI tasks.",
+  "bin": {
+    "lobster-doctor": "./bin/lobster-doctor.js"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "start": "node ./bin/lobster-doctor.js",
+    "all": "node ./bin/lobster-doctor.js all",
+    "config": "node ./bin/lobster-doctor.js config",
+    "disk": "node ./bin/lobster-doctor.js disk",
+    "task": "node ./bin/lobster-doctor.js task",
+    "test": "node --test ./test/*.test.js"
+  },
+  "license": "MIT"
+}

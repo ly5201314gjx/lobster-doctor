@@ -1,0 +1,8 @@
+{
+  "name": "min-skill",
+  "version": "0.0.1",
+  "bin": {
+    "min-skill": "./bin/min-skill.js"
+  },
+  "description": "fixture"
+}

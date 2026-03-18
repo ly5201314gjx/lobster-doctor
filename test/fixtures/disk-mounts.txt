@@ -1,0 +1,3 @@
+C: /mnt/c 92%
+D: /mnt/d 61%
+HOME: /home/test 73%
